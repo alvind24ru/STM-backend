@@ -1,6 +1,5 @@
 import json
 from flask import Flask, jsonify, request
-from tasks import TASCKS
 import sqlite3
 
 conn = sqlite3.connect('STM1.db')
@@ -41,10 +40,20 @@ def add_user():
         except sqlite3.IntegrityError:
             return 'mail is already available'
         else:
-            return f"User {username} created"
+            return f"User {username} created with email {email}"
     else:
         return "something went wrong"
-        
+
+#get users list
+@app.route('/todo/api/v1.0/get_users', methods=['GET'])
+def get_user_list():
+    conn = sqlite3.connect('STM1.db')
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM users;")
+    result = cur.fetchall()
+    conn.close()
+    return jsonify(result)
+
 
     #print (request.method)
     
