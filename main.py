@@ -14,16 +14,15 @@ cur.execute("""CREATE TABLE IF NOT EXISTS tasks(
    title TEXT UNIQUE,
    description TEXT,
    done BOOLEAN,
-   FOREIGN KEY(username) REFERENCES users(userid));
+   FOREIGN KEY(username) REFERENCES users(username));
 """)
 conn.commit()
 conn.close()
 
-
-
 app = Flask(__name__)
 
-#add users
+
+# add users
 @app.route('/todo/api/v1.0/adduser', methods=['POST', 'GET'])
 def add_user():
     if 'username' in request.args:
@@ -44,7 +43,8 @@ def add_user():
     else:
         return "Invalid arguments"
 
-#get users list
+
+# get users list
 @app.route('/todo/api/v1.0/get_users', methods=['GET'])
 def get_user_list():
     conn = sqlite3.connect('STM1.db')
@@ -54,30 +54,44 @@ def get_user_list():
     conn.close()
     return jsonify(result)
 
+    # print (request.method)
 
-    #print (request.method)
 
-#add task
-@app.route('/todo/api/v1.0/add_task', methods=['POST', 'GET'])    
+# add task
+@app.route('/todo/api/v1.0/add_task', methods=['POST', 'GET'])
 def add_task():
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
         try:
-            task = (request.args['username'], request.args['title'], request.args['description'], request.args['done'])
+            username = request.args['username']
+            title = request.args['title']
+            description = request.args['description']
+            done = request.args['done']
             conn = sqlite3.connect('STM1.db')
             cur = conn.cursor()
-            cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
-                VALUES('{username}', '{title}', '{description}', '{done}');""")
+            cur.execute("""SELECT username FROM users""")
+            username_list = cur.fetchall()
+            print(username_list, username, len(username_list), username_list[3][0])
+            for i in range(len(username_list)):
+                if username == username_list[i][0]:
+                    cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
+                        VALUES('{username}', '{title}', '{description}', '{done}');""")
+                    return "Task added!"
+                print(username, username_list[i][0], i)
+            else:
+                return f"User {username} is not found!"
             conn.commit()
             conn.close()
-        except Exception:
-            return print(Exception)
-            
+        except Exception as e:
+            if str(e) == "sqlite3.IntegrityError":
+                return "Required arguments are missing"
+            else:
+                print(e)
+                return str(e)
+
         else:
             return "Tasks added!"
     else:
         return "Invalid argument"
-
-
 
 
 if __name__ == '__main__':
