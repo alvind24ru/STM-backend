@@ -1,8 +1,10 @@
 import json
+import psycopg2
 from flask import Flask, jsonify, request
 import sqlite3
 
 conn = sqlite3.connect('STM1.db')
+# conn = psycopg2.connect(dbname='database', host='localhost')
 cur = conn.cursor()
 cur.execute("""CREATE TABLE IF NOT EXISTS users(
    userid INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -11,7 +13,7 @@ cur.execute("""CREATE TABLE IF NOT EXISTS users(
 cur.execute("""CREATE TABLE IF NOT EXISTS tasks(
    taskid INTEGER PRIMARY KEY AUTOINCREMENT,
    username TEXT,
-   title TEXT UNIQUE,
+   title TEXT,
    description TEXT,
    done BOOLEAN,
    FOREIGN KEY(username) REFERENCES users(username));
@@ -23,7 +25,7 @@ app = Flask(__name__)
 
 
 # add users
-@app.route('/todo/api/v1.0/adduser', methods=['POST', 'GET'])
+@app.route('/todo/api/v1.0/add_user', methods=['POST', 'GET'])
 def add_user():
     if 'username' in request.args:
         try:
@@ -75,21 +77,44 @@ def add_task():
                 if username == username_list[i][0]:
                     cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
                         VALUES('{username}', '{title}', '{description}', '{done}');""")
+                    conn.commit()
+                    conn.close()
                     return "Task added!"
-                print(username, username_list[i][0], i)
             else:
                 return f"User {username} is not found!"
-            conn.commit()
-            conn.close()
         except Exception as e:
             if str(e) == "sqlite3.IntegrityError":
                 return "Required arguments are missing"
             else:
                 print(e)
                 return str(e)
+    else:
+        return "Invalid argument"
 
-        else:
-            return "Tasks added!"
+
+# Получение задач
+@app.route('/todo/api/v1.0/get_tasks', methods=['GET'])
+def get_tasks():
+    if 'userid' in request.args:
+        try:
+            userid = request.args['userid']
+            conn = sqlite3.connect('STM1.db')
+            cur = conn.cursor()
+            cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
+            username = cur.fetchone()[0]
+            print(username)
+            cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
+            user_tasks_list = cur.fetchall()
+            print(user_tasks_list)
+            return user_tasks_list  # todo Сделать отображение в JSON
+
+
+
+        except Exception as e:
+            return str(e)
+
+
+
     else:
         return "Invalid argument"
 
