@@ -1,0 +1,5 @@
+*.db
+*.log
+STMvenv
+.idea
+__pycache__

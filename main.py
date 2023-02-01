@@ -1,35 +1,40 @@
-import json
-import psycopg2
+import logging
 from flask import Flask, jsonify, request
 import sqlite3
-
-conn = sqlite3.connect('STM1.db')
-# conn = psycopg2.connect(dbname='database', host='localhost')
-cur = conn.cursor()
-cur.execute("""CREATE TABLE IF NOT EXISTS users(
-   userid INTEGER PRIMARY KEY AUTOINCREMENT,
-   username TEXT UNIQUE);
-""")
-cur.execute("""CREATE TABLE IF NOT EXISTS tasks(
-   taskid INTEGER PRIMARY KEY AUTOINCREMENT,
-   username TEXT,
-   title TEXT,
-   description TEXT,
-   done BOOLEAN,
-   FOREIGN KEY(username) REFERENCES users(username));
-""")
-conn.commit()
-conn.close()
+import scripts
+logging.basicConfig(level=logging.INFO, filename="py_log.log",
+                    format="%(asctime)s %(levelname)s %(message)s")
+logging.info("___________________________________Сервер начал работу___________________________________")
+try:
+    conn = sqlite3.connect('STM.db', check_same_thread=False)
+    cur = conn.cursor()
+    cur.execute("""CREATE TABLE IF NOT EXISTS users(
+       userid INTEGER PRIMARY KEY AUTOINCREMENT,
+       username TEXT UNIQUE);
+    """)
+    cur.execute("""CREATE TABLE IF NOT EXISTS tasks(
+       taskid INTEGER PRIMARY KEY AUTOINCREMENT,
+       username TEXT,
+       title TEXT,
+       description TEXT,
+       done BOOLEAN,
+       FOREIGN KEY(username) REFERENCES users(username));
+    """)
+    conn.commit()
+    conn.close()
+except Exception:
+    logging.critical("Исключение при создании БД", exc_info=True)
 
 app = Flask(__name__)
 
 
 # add users
-@app.route('/todo/api/v1.0/add_user', methods=['POST', 'GET'])
+@app.route('/todo/api/v1.0/add_user', methods=['POST'])
 def add_user():
+    logging.info("Получен запрос создания пользователя")
     if 'username' in request.args:
         try:
-            conn = sqlite3.connect('STM1.db')
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
             username = request.args['username']
             cur.execute(f"""INSERT INTO users(username) 
@@ -39,83 +44,92 @@ def add_user():
             userid = cur.fetchone()
             conn.close()
         except sqlite3.IntegrityError:
+            logging.error("Указанное имя пользователя уже имеется", exc_info=True)
             return 'This username is already in use!'
+        except Exception:
+            logging.critical("Исключение при запросе на добавление пользователя", exc_info=True)
         else:
+            logging.info("Пользователь успешно добавлен")
             return f"User {username} has created with id {userid[0]}!"
     else:
+        logging.info("Не все необходимые аргументы найдены")
         return "Invalid arguments"
 
 
 # get users list
 @app.route('/todo/api/v1.0/get_users', methods=['GET'])
 def get_user_list():
-    conn = sqlite3.connect('STM1.db')
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM users;")
-    result = cur.fetchall()
-    conn.close()
-    return jsonify(result)
-
-    # print (request.method)
-
+    logging.info("Получен запрос списка пользователей")
+    try:
+        conn = sqlite3.connect('STM.db', check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM users;")
+        result = scripts.list_to_json(cur, cur.fetchall())
+        conn.close()
+        logging.info("Список пользователей успешно предоставлен")
+        return result
+    except Exception:
+        logging.critical("Исключение при запросе списка пользователей", exc_info=True)
 
 # add task
 @app.route('/todo/api/v1.0/add_task', methods=['POST', 'GET'])
 def add_task():
+    logging.info("Получен запрос на добавление задачи")
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
         try:
             username = request.args['username']
             title = request.args['title']
             description = request.args['description']
             done = request.args['done']
-            conn = sqlite3.connect('STM1.db')
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
             cur.execute("""SELECT username FROM users""")
             username_list = cur.fetchall()
-            print(username_list, username, len(username_list), username_list[3][0])
             for i in range(len(username_list)):
                 if username == username_list[i][0]:
                     cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
                         VALUES('{username}', '{title}', '{description}', '{done}');""")
                     conn.commit()
                     conn.close()
+                    logging.info("Добавлена задача")
                     return "Task added!"
             else:
+                logging.info("данный username не найден для добавления задачи")
                 return f"User {username} is not found!"
         except Exception as e:
-            if str(e) == "sqlite3.IntegrityError":
-                return "Required arguments are missing"
-            else:
-                print(e)
-                return str(e)
+            logging.critical("Исключение при добавлении задачи", exc_info=True)
+            return str(e)
     else:
+        logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
 
 
-# Получение задач
+# get tasks
 @app.route('/todo/api/v1.0/get_tasks', methods=['GET'])
 def get_tasks():
+    logging.info("Получен запрос на получение списка задач")
     if 'userid' in request.args:
         try:
             userid = request.args['userid']
-            conn = sqlite3.connect('STM1.db')
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
             cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
             username = cur.fetchone()[0]
-            print(username)
             cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
-            user_tasks_list = cur.fetchall()
-            print(user_tasks_list)
-            return user_tasks_list  # todo Сделать отображение в JSON
+            user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
+            logging.info(f"Список задач пользователя {username} предоставлен")
+            return user_tasks_list
 
 
 
         except Exception as e:
+            logging.critical("Исключение при попытке получения задач", exc_info=True)
             return str(e)
 
 
 
     else:
+        logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
 
 
