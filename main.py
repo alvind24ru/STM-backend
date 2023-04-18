@@ -2,7 +2,7 @@ import logging
 from flask import Flask, jsonify, request
 import sqlite3
 import scripts
-logging.basicConfig(level=logging.INFO, filename="py_log.log",
+logging.basicConfig(level=logging.INFO, filename="py_log.txt",
                     format="%(asctime)s %(levelname)s %(message)s")
 logging.info("___________________________________Сервер начал работу___________________________________")
 try:
@@ -28,9 +28,8 @@ except Exception:
 app = Flask(__name__)
 
 
-# add users
-@app.route('/todo/api/v1.0/add_user', methods=['POST'])
-def add_user():
+@app.route('/todo/api/v1.0/adduser', methods=['POST'])
+def create_user():
     logging.info("Получен запрос создания пользователя")
     if 'username' in request.args:
         try:
@@ -55,10 +54,22 @@ def add_user():
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid arguments"
 
+@app.route('/todo/api/v1.0/get/user', methods=['GET'])
+def read_user():
+    return('test')
+
+
+@app.route('/todo/api/v1.0/adduser', methods=['POST'])
+def update_user():
+    pass
+
+@app.route('/todo/api/v1.0/adduser', methods=['POST'])
+def delete_user():
+    pass
 
 # get users list
 @app.route('/todo/api/v1.0/get_users', methods=['GET'])
-def get_user_list():
+def get_all_users():
     logging.info("Получен запрос списка пользователей")
     try:
         conn = sqlite3.connect('STM.db', check_same_thread=False)
@@ -67,13 +78,12 @@ def get_user_list():
         result = scripts.list_to_json(cur, cur.fetchall())
         conn.close()
         logging.info("Список пользователей успешно предоставлен")
-        return result
+        return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
     except Exception:
         logging.critical("Исключение при запросе списка пользователей", exc_info=True)
 
-# add task
 @app.route('/todo/api/v1.0/add_task', methods=['POST', 'GET'])
-def add_task():
+def create_task():
     logging.info("Получен запрос на добавление задачи")
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
         try:
@@ -104,7 +114,6 @@ def add_task():
         return "Invalid argument"
 
 
-# get tasks
 @app.route('/todo/api/v1.0/get_tasks', methods=['GET'])
 def get_tasks():
     logging.info("Получен запрос на получение списка задач")
@@ -118,19 +127,90 @@ def get_tasks():
             cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
             user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
             logging.info(f"Список задач пользователя {username} предоставлен")
-            return user_tasks_list
-
-
-
+            conn.commit()
+            conn.close()
+            return user_tasks_list, {'Content-Type': 'application/json; charset=utf-8'}
         except Exception as e:
             logging.critical("Исключение при попытке получения задач", exc_info=True)
             return str(e)
+    else:
+        logging.info("Не все необходимые аргументы найдены")
+        return "Invalid argument"
 
-
+@app.route('/todo/api/v1.0/update_tasks', methods=['GET'])
+def update_tasks():
+    if 'taskid' in request.args:
+        try:
+            title_status = 0
+            description_status = 0
+            taskid = request.args['taskid']
+            if 'title' in request.args:
+                title = request.args['title']
+                conn = sqlite3.connect('STM.db', check_same_thread=False)
+                cur = conn.cursor()
+                cur.execute(f"""UPDATE tasks SET title = '{title}' WHERE taskid = {taskid}""")
+                logging.info(f"Title has updated")
+                conn.commit()
+                conn.close()
+                title_status = 1
+            if 'description' in request.args:
+                description = request.args['description']
+                conn = sqlite3.connect('STM.db', check_same_thread=False)
+                cur = conn.cursor()
+                cur.execute(f"""UPDATE tasks SET description = '{description}' WHERE taskid = {taskid}""")
+                logging.info(f"description has updated")
+                conn.commit()
+                conn.close()
+                description_status = 1
+            if description_status == 1 and title_status == 0:
+                return 'descriprion has change'
+            if title_status == 1 and description_status == 0:
+                return 'title has change'
+            if title_status == 1 and description_status == 1:
+                return 'title and descriprion has change'
+        except Exception as e:
+                logging.critical("Исключение при попытке изменения задачи", exc_info=True)
+                return str(e)
 
     else:
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
+
+@app.route('/todo/api/v1.0/delete_tasks', methods=['GET'])
+def delete_tasks():
+    logging.info("Получен запрос на удаление задачи")
+    if 'taskid' in request.args:
+        try:
+            taskid = request.args['taskid']
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(f"""DELETE FROM tasks WHERE taskid = {taskid}""") #TODO не возвращает ошибку даже если записи с таким ID нет в таблице
+            logging.info(f"Задача с ID {taskid} удалена")
+            print(f"Задача с ID {taskid} удалена")
+            conn.commit()
+            conn.close()
+            return 'OK'
+        except Exception as e:
+            logging.critical("Исключение при попытке удаления задачи", exc_info=True)
+            return str(e)
+    else:
+        logging.info("Не все необходимые аргументы найдены")
+        return "Invalid argument"
+
+# @app.route('/todo/api/v1.0/get_tasks', methods=['POST'])
+# def change_username():
+#     logging.info("Получен запрос на изменение имени пользователя")
+#     if 'userid' in request.args:
+#         try:
+#             userid = request.args['userid']
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute("""UPDATE users SET username = 150 WHERE num = 2""")
+#         except Exception as e:
+#             pass
+#         pass
+
+
 
 
 if __name__ == '__main__':
