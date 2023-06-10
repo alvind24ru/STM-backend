@@ -1,0 +1,75 @@
+2023-06-10 15:02:00,968 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:02:01,040 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2023-06-10 15:02:01,040 INFO [33mPress CTRL+C to quit[0m
+2023-06-10 15:02:01,042 INFO  * Restarting with stat
+2023-06-10 15:02:01,369 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:02:01,386 WARNING  * Debugger is active!
+2023-06-10 15:02:01,389 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:41:36,324 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:41:36,343 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2023-06-10 15:41:36,344 INFO [33mPress CTRL+C to quit[0m
+2023-06-10 15:41:36,345 INFO  * Restarting with stat
+2023-06-10 15:41:36,673 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:41:36,686 WARNING  * Debugger is active!
+2023-06-10 15:41:36,689 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:43:35,346 INFO Получен запрос создания пользователя
+2023-06-10 15:43:35,354 INFO 127.0.0.1 - - [10/Jun/2023 15:43:35] "POST /v0.1.0/create/user?username=oaskjdfhaksjfh HTTP/1.1" 200 -
+2023-06-10 15:43:45,444 INFO Получен запрос создания пользователя
+2023-06-10 15:43:45,445 ERROR Указанное имя пользователя уже имеется
+Traceback (most recent call last):
+  File "C:\Users\xamji\PycharmProjects\STM-backend\main.py", line 57, in create_user
+    cur.execute(f"""INSERT INTO users(username)
+sqlite3.IntegrityError: UNIQUE constraint failed: users.username
+2023-06-10 15:43:45,446 INFO 127.0.0.1 - - [10/Jun/2023 15:43:45] "POST /v0.1.0/create/user?username=oaskjdfhaksjfh HTTP/1.1" 200 -
+2023-06-10 15:46:07,849 INFO  * Detected change in 'C:\\Users\\xamji\\PycharmProjects\\STM-backend\\main.py', reloading
+2023-06-10 15:46:07,886 INFO  * Restarting with stat
+2023-06-10 15:46:08,217 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:46:08,238 WARNING  * Debugger is active!
+2023-06-10 15:46:08,243 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:48:17,767 INFO  * Detected change in 'C:\\Users\\xamji\\PycharmProjects\\STM-backend\\main.py', reloading
+2023-06-10 15:48:17,816 INFO  * Restarting with stat
+2023-06-10 15:48:18,177 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:48:18,190 WARNING  * Debugger is active!
+2023-06-10 15:48:18,193 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:48:37,907 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:48:37,926 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2023-06-10 15:48:37,926 INFO [33mPress CTRL+C to quit[0m
+2023-06-10 15:48:37,928 INFO  * Restarting with stat
+2023-06-10 15:48:38,256 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:48:38,268 WARNING  * Debugger is active!
+2023-06-10 15:48:38,271 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:48:40,960 INFO Получен запрос создания пользователя
+2023-06-10 15:48:40,960 ERROR Указанное имя пользователя уже имеется
+Traceback (most recent call last):
+  File "C:\Users\xamji\PycharmProjects\STM-backend\main.py", line 57, in create_user
+    cur.execute(f"""INSERT INTO users(username)
+sqlite3.IntegrityError: UNIQUE constraint failed: users.username
+2023-06-10 15:48:40,961 INFO 127.0.0.1 - - [10/Jun/2023 15:48:40] "POST /v0.1.0/create/user?username=oaskjdfhaksjfh HTTP/1.1" 200 -
+2023-06-10 15:48:45,120 INFO Получен запрос создания пользователя
+2023-06-10 15:48:45,127 INFO 127.0.0.1 - - [10/Jun/2023 15:48:45] "POST /v0.1.0/create/user?username=oaskjdfhaksjfh12 HTTP/1.1" 200 -
+2023-06-10 15:49:04,784 INFO  * Detected change in 'C:\\Users\\xamji\\PycharmProjects\\STM-backend\\main.py', reloading
+2023-06-10 15:49:04,836 INFO  * Restarting with stat
+2023-06-10 15:49:05,252 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:49:05,272 WARNING  * Debugger is active!
+2023-06-10 15:49:05,276 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:50:17,625 INFO  * Detected change in 'C:\\Users\\xamji\\PycharmProjects\\STM-backend\\main.py', reloading
+2023-06-10 15:50:17,662 INFO  * Restarting with stat
+2023-06-10 15:50:18,028 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:50:18,041 WARNING  * Debugger is active!
+2023-06-10 15:50:18,044 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:57:26,472 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:57:26,492 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2023-06-10 15:57:26,492 INFO [33mPress CTRL+C to quit[0m
+2023-06-10 15:57:26,493 INFO  * Restarting with stat
+2023-06-10 15:57:26,819 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:57:26,831 WARNING  * Debugger is active!
+2023-06-10 15:57:26,834 INFO  * Debugger PIN: 867-260-231
+2023-06-10 15:57:37,160 INFO ___________________________________Сервер начал работу___________________________________
+2023-06-10 15:57:37,192 INFO [31m[1mWARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.[0m
+ * Running on http://127.0.0.1:5000
+2023-06-10 15:57:37,193 INFO [33mPress CTRL+C to quit[0m
+2023-06-10 15:57:37,197 INFO  * Restarting with stat

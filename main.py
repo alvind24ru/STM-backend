@@ -1,7 +1,17 @@
 import logging
-from flask import Flask, jsonify, request
+from flask import Flask, json, request
 import sqlite3
 import scripts
+
+#TODO доделать все методы для users
+
+
+
+with open('apidoc.json') as file:
+    data = json.load(file)
+
+VERSION = 'v' + data['version']
+
 logging.basicConfig(level=logging.INFO, filename="py_log.txt",
                     format="%(asctime)s %(levelname)s %(message)s")
 logging.info("___________________________________Сервер начал работу___________________________________")
@@ -28,7 +38,7 @@ except Exception:
 app = Flask(__name__)
 
 
-@app.route('/todo/api/v1.0/adduser', methods=['POST'])
+@app.route(f'/{VERSION}/create/user', methods=['POST'])
 def create_user():
     logging.info("Получен запрос создания пользователя")
     if 'username' in request.args:
@@ -39,36 +49,28 @@ def create_user():
             cur.execute(f"""INSERT INTO users(username) 
             VALUES('{username}');""")
             conn.commit()
-            cur.execute(f"SELECT userid FROM users WHERE username='{username}'")
-            userid = cur.fetchone()
+            cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
+            created_user = scripts.list_to_json(cur=cur, data=cur.fetchall())
             conn.close()
         except sqlite3.IntegrityError:
             logging.error("Указанное имя пользователя уже имеется", exc_info=True)
-            return 'This username is already in use!'
+            return 'UsernameError'
         except Exception:
             logging.critical("Исключение при запросе на добавление пользователя", exc_info=True)
         else:
-            logging.info("Пользователь успешно добавлен")
-            return f"User {username} has created with id {userid[0]}!"
+            return created_user
     else:
         logging.info("Не все необходимые аргументы найдены")
-        return "Invalid arguments"
+        return "InvalidArguments"
 
-@app.route('/todo/api/v1.0/get/user', methods=['GET'])
+
+@app.route(f'/{VERSION}/get/user', methods=['GET'])
 def read_user():
-    return('test')
+    return ('test')
 
 
-@app.route('/todo/api/v1.0/adduser', methods=['POST'])
-def update_user():
-    pass
-
-@app.route('/todo/api/v1.0/adduser', methods=['POST'])
-def delete_user():
-    pass
-
-# get users list
-@app.route('/todo/api/v1.0/get_users', methods=['GET'])
+# get all users
+@app.route(f'/{VERSION}/get/all_users', methods=['GET'])
 def get_all_users():
     logging.info("Получен запрос списка пользователей")
     try:
@@ -82,7 +84,8 @@ def get_all_users():
     except Exception:
         logging.critical("Исключение при запросе списка пользователей", exc_info=True)
 
-@app.route('/todo/api/v1.0/add_task', methods=['POST', 'GET'])
+
+@app.route(f'/{VERSION}/create/task', methods=['POST', 'GET'])
 def create_task():
     logging.info("Получен запрос на добавление задачи")
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
@@ -137,6 +140,7 @@ def get_tasks():
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
 
+
 @app.route('/todo/api/v1.0/update_tasks', methods=['GET'])
 def update_tasks():
     if 'taskid' in request.args:
@@ -169,12 +173,13 @@ def update_tasks():
             if title_status == 1 and description_status == 1:
                 return 'title and descriprion has change'
         except Exception as e:
-                logging.critical("Исключение при попытке изменения задачи", exc_info=True)
-                return str(e)
+            logging.critical("Исключение при попытке изменения задачи", exc_info=True)
+            return str(e)
 
     else:
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
+
 
 @app.route('/todo/api/v1.0/delete_tasks', methods=['GET'])
 def delete_tasks():
@@ -184,7 +189,8 @@ def delete_tasks():
             taskid = request.args['taskid']
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
-            cur.execute(f"""DELETE FROM tasks WHERE taskid = {taskid}""") #TODO не возвращает ошибку даже если записи с таким ID нет в таблице
+            cur.execute(
+                f"""DELETE FROM tasks WHERE taskid = {taskid}""")  # TODO не возвращает ошибку даже если записи с таким ID нет в таблице
             logging.info(f"Задача с ID {taskid} удалена")
             print(f"Задача с ID {taskid} удалена")
             conn.commit()
@@ -196,6 +202,7 @@ def delete_tasks():
     else:
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
+
 
 # @app.route('/todo/api/v1.0/get_tasks', methods=['POST'])
 # def change_username():
@@ -209,8 +216,6 @@ def delete_tasks():
 #         except Exception as e:
 #             pass
 #         pass
-
-
 
 
 if __name__ == '__main__':
