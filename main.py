@@ -3,7 +3,6 @@ from flask import Flask, json, request
 import sqlite3
 import scripts
 
-#TODO доделать все методы для users
 
 
 
@@ -65,8 +64,28 @@ def create_user():
 
 
 @app.route(f'/{VERSION}/get/user', methods=['GET'])
-def read_user():
-    return ('test')
+def get_user():
+    logging.info("Получен запрос на получение пользователя")
+    if 'username' in request.args:
+        try:
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            username = request.args['username']
+            cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
+            result = scripts.list_to_json(cur=cur, data=cur.fetchall())
+            conn.close()
+        except Exception:
+            logging.critical(f"Исключение при запросе получения пользователя", exc_info=True)
+        else:
+            return result
+
+@app.route(f'/{VERSION}/update/user', methods=['POST'])
+def change_username():
+    pass
+
+@app.route(f'/{VERSION}/delete/user', methods=['POST'])
+def delete_user():
+    pass
 
 
 # get all users
@@ -118,7 +137,7 @@ def create_task():
 
 
 @app.route('/todo/api/v1.0/get_tasks', methods=['GET'])
-def get_tasks():
+def get_all_user_tasks():
     logging.info("Получен запрос на получение списка задач")
     if 'userid' in request.args:
         try:
@@ -139,6 +158,10 @@ def get_tasks():
     else:
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
+
+@app.route('/todo/api/v1.0/get_task', methods=['GET'])
+def get_task():
+    pass
 
 
 @app.route('/todo/api/v1.0/update_tasks', methods=['GET'])
@@ -203,7 +226,8 @@ def delete_tasks():
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
 
-
+def test():
+    return 'True'
 # @app.route('/todo/api/v1.0/get_tasks', methods=['POST'])
 # def change_username():
 #     logging.info("Получен запрос на изменение имени пользователя")
