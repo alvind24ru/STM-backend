@@ -1,11 +1,11 @@
 import logging
-from flask import Flask, json, request
+from flask import Flask, json, request, jsonify
 import sqlite3
 import scripts
 
 
 
-
+#TODO Найти нормальную библиотеку для сериализации данных из БД в JSON
 with open('apidoc.json') as file:
     data = json.load(file)
 
@@ -37,7 +37,7 @@ except Exception:
 app = Flask(__name__)
 
 
-@app.route(f'/{VERSION}/create/user', methods=['POST'])
+@app.route(f'/api/{VERSION}/users/create', methods=['POST'])
 def create_user():
     logging.info("Получен запрос создания пользователя")
     if 'username' in request.args:
@@ -63,21 +63,20 @@ def create_user():
         return "InvalidArguments"
 
 
-@app.route(f'/{VERSION}/get/user', methods=['GET'])
-def get_user():
+@app.route(f'/api/{VERSION}/users/get/<string:username>', methods=['GET'])
+def get_user(username):
     logging.info("Получен запрос на получение пользователя")
-    if 'username' in request.args:
-        try:
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            username = request.args['username']
-            cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
-            result = scripts.list_to_json(cur=cur, data=cur.fetchall())
-            conn.close()
-        except Exception:
-            logging.critical(f"Исключение при запросе получения пользователя", exc_info=True)
-        else:
-            return result
+    try:
+        conn = sqlite3.connect('STM.db', check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
+        result = scripts.list_to_json(cur=cur, data=cur.fetchall())
+        conn.close()
+    except Exception as e:
+        return e
+        logging.critical(f"Исключение при запросе получения пользователя", exc_info=True)
+    else:
+        return result
 
 @app.route(f'/{VERSION}/update/user', methods=['POST'])
 def change_username():
@@ -159,45 +158,41 @@ def get_all_user_tasks():
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument"
 
-@app.route('/todo/api/v1.0/get_task', methods=['GET'])
-def get_task():
-    pass
+@app.route('/todo/api/v1.0/tasks/get/<int:id>', methods=['GET'])
+def get_task(id):
+    try:
+        conn = sqlite3.connect('STM.db', check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute(f"""SELECT * FROM tasks WHERE taskid == {id}""")
+        result = scripts.list_to_json(cur, cur.fetchall())
+        conn.commit()
+        conn.close()
+        return result, {'Content-Type': 'application/json; charset=utf-8'}
+    except Exception as e:
+        logging.critical("Исключение при попытке получения задачи", exc_info=True)
+        return str(e)
 
 
 @app.route('/todo/api/v1.0/update_tasks', methods=['GET'])
 def update_tasks():
-    if 'taskid' in request.args:
+    if 'taskid' in request.args and 'title' in request.args:
         try:
-            title_status = 0
-            description_status = 0
             taskid = request.args['taskid']
-            if 'title' in request.args:
-                title = request.args['title']
-                conn = sqlite3.connect('STM.db', check_same_thread=False)
-                cur = conn.cursor()
-                cur.execute(f"""UPDATE tasks SET title = '{title}' WHERE taskid = {taskid}""")
-                logging.info(f"Title has updated")
-                conn.commit()
-                conn.close()
-                title_status = 1
-            if 'description' in request.args:
-                description = request.args['description']
-                conn = sqlite3.connect('STM.db', check_same_thread=False)
-                cur = conn.cursor()
-                cur.execute(f"""UPDATE tasks SET description = '{description}' WHERE taskid = {taskid}""")
-                logging.info(f"description has updated")
-                conn.commit()
-                conn.close()
-                description_status = 1
-            if description_status == 1 and title_status == 0:
-                return 'descriprion has change'
-            if title_status == 1 and description_status == 0:
-                return 'title has change'
-            if title_status == 1 and description_status == 1:
-                return 'title and descriprion has change'
+            title = request.args['title']
+            description = request.args['description']
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(f"""UPDATE tasks SET title = '{title}' WHERE taskid = {taskid}""")
+            cur.execute(f"""UPDATE tasks SET description = '{description}' WHERE taskid = {taskid}""")
+            conn.commit()
+            cur.execute(f"""SELECT * FROM tasks WHERE taskid = {taskid}""")
+            result = scripts.list_to_json(cur, cur.fetchall())
+            conn.commit()
+            conn.close()
+            return result, {'Content-Type': 'application/json; charset=utf-8'}
         except Exception as e:
+            return e
             logging.critical("Исключение при попытке изменения задачи", exc_info=True)
-            return str(e)
 
     else:
         logging.info("Не все необходимые аргументы найдены")
