@@ -4,6 +4,6 @@
     "description": "API документация к STM (Simple Task Manager) приложению ",
     "apidoc": {
       "title": "STM api",
-      "url" : "https://31.172.70.114:5000/v0.1.0"
+      "url" : "https://31.172.70.114:5000/api/v0.1.0"
     }
   }

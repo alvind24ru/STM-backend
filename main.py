@@ -11,7 +11,7 @@ with open('apidoc.json') as file:
 
 VERSION = 'v' + data['version']
 
-logging.basicConfig(level=logging.INFO, filename="py_log.txt",
+logging.basicConfig(level=logging.INFO, filename="py_log.log",
                     format="%(asctime)s %(levelname)s %(message)s")
 logging.info("___________________________________Сервер начал работу___________________________________")
 try:
@@ -48,19 +48,19 @@ def create_user():
             cur.execute(f"""INSERT INTO users(username) 
             VALUES('{username}');""")
             conn.commit()
-            cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
+            cur.execute(f"SELECT * FROM users WHERE username='{username}'")
             created_user = scripts.list_to_json(cur=cur, data=cur.fetchall())
             conn.close()
+            return created_user, 200
         except sqlite3.IntegrityError:
             logging.error("Указанное имя пользователя уже имеется", exc_info=True)
-            return 'UsernameError'
-        except Exception:
+            return 'the username is already in use', 200
+        except Exception as e:
             logging.critical("Исключение при запросе на добавление пользователя", exc_info=True)
-        else:
-            return created_user
+            return e, 400
     else:
         logging.info("Не все необходимые аргументы найдены")
-        return "InvalidArguments"
+        return "InvalidArguments", 200
 
 
 @app.route(f'/api/{VERSION}/users/get/<string:username>', methods=['GET'])
@@ -69,26 +69,24 @@ def get_user(username):
     try:
         conn = sqlite3.connect('STM.db', check_same_thread=False)
         cur = conn.cursor()
-        cur.execute(f"SELECT userid, username FROM users WHERE username='{username}'")
+        cur.execute(f"SELECT * FROM users WHERE username='{username}'")
         result = scripts.list_to_json(cur=cur, data=cur.fetchall())
         conn.close()
+        return result, 200
     except Exception as e:
-        return e
-        logging.critical(f"Исключение при запросе получения пользователя", exc_info=True)
-    else:
-        return result
+        logging.critical("Исключение при запросе получения пользователя", exc_info=True)
+        return e, 400
 
 @app.route(f'/{VERSION}/update/user', methods=['POST'])
-def change_username():
+def Ochange_username():
     pass
 
 @app.route(f'/{VERSION}/delete/user', methods=['POST'])
-def delete_user():
+def Odelete_user():
     pass
 
 
-# get all users
-@app.route(f'/{VERSION}/get/all_users', methods=['GET'])
+@app.route(f'/api/{VERSION}/users/get/all', methods=['GET'])
 def get_all_users():
     logging.info("Получен запрос списка пользователей")
     try:
@@ -99,11 +97,12 @@ def get_all_users():
         conn.close()
         logging.info("Список пользователей успешно предоставлен")
         return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
-    except Exception:
+    except Exception as e:
         logging.critical("Исключение при запросе списка пользователей", exc_info=True)
+        return e, 400
 
 
-@app.route(f'/{VERSION}/create/task', methods=['POST', 'GET'])
+@app.route(f'/api/{VERSION}/tasks/create', methods=['POST'])
 def create_task():
     logging.info("Получен запрос на добавление задачи")
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
@@ -121,9 +120,12 @@ def create_task():
                     cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
                         VALUES('{username}', '{title}', '{description}', '{done}');""")
                     conn.commit()
+                    cur.execute(f"""SELECT * FROM tasks WHERE username = '{username}' AND taskid = (SELECT max(taskid) 
+                    FROM tasks WHERE username = '{username}')""")
+                    task = scripts.list_to_json(cur, cur.fetchall())
                     conn.close()
                     logging.info("Добавлена задача")
-                    return "Task added!"
+                    return task, 200
             else:
                 logging.info("данный username не найден для добавления задачи")
                 return f"User {username} is not found!"
