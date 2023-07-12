@@ -1,11 +1,12 @@
 import logging
 from flask import Flask, json, request, jsonify
+
+import DBoperators
+from DBoperators import *
 import sqlite3
 import scripts
 
-
-
-#TODO Найти нормальную библиотеку для сериализации данных из БД в JSON
+# TODO Найти нормальную библиотеку для сериализации данных из БД в JSON
 with open('apidoc.json') as file:
     data = json.load(file)
 
@@ -66,24 +67,62 @@ def create_user():
 @app.route(f'/api/{VERSION}/users/get/<string:username>', methods=['GET'])
 def get_user(username):
     logging.info("Получен запрос на получение пользователя")
+    if DBoperators.user_is_available(username=username):
+        try:
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(f"SELECT * FROM users WHERE username='{username}'")
+            result = scripts.list_to_json(cur=cur, data=cur.fetchall())
+            conn.close()
+            return result, 200
+        except Exception as e:
+            logging.critical("Исключение при запросе получения пользователя", exc_info=True)
+            return e, 400
+    else:
+        return 'user not found', 200
+
+
+@app.route(f'/api/{VERSION}/users/update', methods=['POST'])
+def update_user():
+    if 'userid' in request.args and 'username' in request.args:
+        try:
+            userid = request.args['userid']
+            username = request.args['username']
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(f"""UPDATE users SET username = '{username}' WHERE userid = {userid}""")
+            conn.commit()
+            cur.execute(f"""SELECT * FROM users WHERE userid = {userid}""")
+            result = scripts.list_to_json(cur, cur.fetchall())
+            conn.commit()
+            conn.close()
+            return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
+        except Exception as e:
+            logging.critical("Исключение при попытке изменения пользователя", exc_info=True)
+            return e, 400
+    else:
+        logging.info("Не все необходимые аргументы найдены")
+        return "Invalid argument", 200
+
+
+@app.route(f'/api/{VERSION}/users/delete/<int:userid>', methods=['GET'])
+def delete_user(userid):
+    logging.info("Получен запрос на удаление пользователя")
     try:
-        conn = sqlite3.connect('STM.db', check_same_thread=False)
-        cur = conn.cursor()
-        cur.execute(f"SELECT * FROM users WHERE username='{username}'")
-        result = scripts.list_to_json(cur=cur, data=cur.fetchall())
-        conn.close()
-        return result, 200
+        if DBoperators.user_is_available(userid=userid):
+            conn = sqlite3.connect('STM.db', check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(
+                f"""DELETE FROM users WHERE userid = {userid}""")
+            logging.info(f"Пользователь с ID {userid} удален")
+            conn.commit()
+            conn.close()
+            return 'OK', 200
+        else:
+            return 'there is no user with this id', 200
     except Exception as e:
-        logging.critical("Исключение при запросе получения пользователя", exc_info=True)
+        logging.critical("Исключение при попытке удаления пользователя", exc_info=True)
         return e, 400
-
-@app.route(f'/{VERSION}/update/user', methods=['POST'])
-def Ochange_username():
-    pass
-
-@app.route(f'/{VERSION}/delete/user', methods=['POST'])
-def Odelete_user():
-    pass
 
 
 @app.route(f'/api/{VERSION}/users/get/all', methods=['GET'])
@@ -131,53 +170,49 @@ def create_task():
                 return f"User {username} is not found!"
         except Exception as e:
             logging.critical("Исключение при добавлении задачи", exc_info=True)
-            return str(e)
+            return e, 400
     else:
         logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument"
+        return "Invalid argument", 200
 
 
-@app.route('/todo/api/v1.0/get_tasks', methods=['GET'])
-def get_all_user_tasks():
+@app.route(f'/api/{VERSION}/tasks/get-all/<int:userid>', methods=['GET'])
+def get_all_user_tasks(userid):
     logging.info("Получен запрос на получение списка задач")
-    if 'userid' in request.args:
-        try:
-            userid = request.args['userid']
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
-            username = cur.fetchone()[0]
-            cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
-            user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
-            logging.info(f"Список задач пользователя {username} предоставлен")
-            conn.commit()
-            conn.close()
-            return user_tasks_list, {'Content-Type': 'application/json; charset=utf-8'}
-        except Exception as e:
-            logging.critical("Исключение при попытке получения задач", exc_info=True)
-            return str(e)
-    else:
-        logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument"
-
-@app.route('/todo/api/v1.0/tasks/get/<int:id>', methods=['GET'])
-def get_task(id):
     try:
         conn = sqlite3.connect('STM.db', check_same_thread=False)
         cur = conn.cursor()
-        cur.execute(f"""SELECT * FROM tasks WHERE taskid == {id}""")
+        cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
+        username = cur.fetchone()[0]
+        cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
+        user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
+        logging.info(f"Список задач пользователя {username} предоставлен")
+        conn.commit()
+        conn.close()
+        return user_tasks_list, 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except Exception as e:
+        logging.critical("Исключение при попытке получения задач", exc_info=True)
+        return e, 400
+
+
+@app.route(f'/api/{VERSION}/tasks/get/<int:taskid>', methods=['GET'])
+def get_task(taskid):
+    try:
+        conn = sqlite3.connect('STM.db', check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute(f"""SELECT * FROM tasks WHERE taskid == {taskid}""")
         result = scripts.list_to_json(cur, cur.fetchall())
         conn.commit()
         conn.close()
-        return result, {'Content-Type': 'application/json; charset=utf-8'}
+        return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
     except Exception as e:
         logging.critical("Исключение при попытке получения задачи", exc_info=True)
-        return str(e)
+        return e, 400
 
 
-@app.route('/todo/api/v1.0/update_tasks', methods=['GET'])
+@app.route(f'/api/{VERSION}/tasks/update', methods=['POST'])
 def update_tasks():
-    if 'taskid' in request.args and 'title' in request.args:
+    if 'taskid' in request.args and 'title' in request.args and 'description' in request.args:
         try:
             taskid = request.args['taskid']
             title = request.args['title']
@@ -191,52 +226,37 @@ def update_tasks():
             result = scripts.list_to_json(cur, cur.fetchall())
             conn.commit()
             conn.close()
-            return result, {'Content-Type': 'application/json; charset=utf-8'}
+            return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
         except Exception as e:
-            return e
             logging.critical("Исключение при попытке изменения задачи", exc_info=True)
-
+            return e, 400
     else:
         logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument"
+        return "Invalid argument", 200
 
 
-@app.route('/todo/api/v1.0/delete_tasks', methods=['GET'])
-def delete_tasks():
+@app.route(f'/api/{VERSION}/tasks/delete/<int:taskid>', methods=['GET'])
+def delete_task(taskid):
     logging.info("Получен запрос на удаление задачи")
-    if 'taskid' in request.args:
+    if DBoperators.task_is_available(taskid):
         try:
-            taskid = request.args['taskid']
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
             cur.execute(
-                f"""DELETE FROM tasks WHERE taskid = {taskid}""")  # TODO не возвращает ошибку даже если записи с таким ID нет в таблице
+                f"""DELETE FROM tasks WHERE taskid = {taskid}""")
             logging.info(f"Задача с ID {taskid} удалена")
-            print(f"Задача с ID {taskid} удалена")
             conn.commit()
             conn.close()
-            return 'OK'
+            return 'OK', 200
         except Exception as e:
             logging.critical("Исключение при попытке удаления задачи", exc_info=True)
-            return str(e)
+            return e, 400
     else:
-        logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument"
+        return 'there is no task with this id', 200
 
+@app.route('/test', methods=['GET'])
 def test():
     return 'True'
-# @app.route('/todo/api/v1.0/get_tasks', methods=['POST'])
-# def change_username():
-#     logging.info("Получен запрос на изменение имени пользователя")
-#     if 'userid' in request.args:
-#         try:
-#             userid = request.args['userid']
-#             conn = sqlite3.connect('STM.db', check_same_thread=False)
-#             cur = conn.cursor()
-#             cur.execute("""UPDATE users SET username = 150 WHERE num = 2""")
-#         except Exception as e:
-#             pass
-#         pass
 
 
 if __name__ == '__main__':
