@@ -1,8 +1,8 @@
 import logging
 from flask import Flask, json, request, jsonify
 
-import DBoperators
-from DBoperators import *
+import dbmethods
+from dbmethods import *
 import sqlite3
 import scripts
 
@@ -26,7 +26,7 @@ try:
        taskid INTEGER PRIMARY KEY AUTOINCREMENT,
        username TEXT,
        title TEXT,
-       description TEXT,
+       description TEXT, 
        done BOOLEAN,
        FOREIGN KEY(username) REFERENCES users(username));
     """)
@@ -38,7 +38,7 @@ except Exception:
 app = Flask(__name__)
 
 
-@app.route(f'/api/{VERSION}/users/create', methods=['POST'])
+@app.route(f'/api/{VERSION}/users', methods=['POST'])
 def create_user():
     logging.info("Получен запрос создания пользователя")
     if 'username' in request.args:
@@ -64,14 +64,14 @@ def create_user():
         return "InvalidArguments", 200
 
 
-@app.route(f'/api/{VERSION}/users/get/<string:username>', methods=['GET'])
-def get_user(username):
+@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['GET'])
+def get_user(userid):
     logging.info("Получен запрос на получение пользователя")
-    if DBoperators.user_is_available(username=username):
+    if dbmethods.user_is_available(userid=userid):
         try:
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
-            cur.execute(f"SELECT * FROM users WHERE username='{username}'")
+            cur.execute(f"SELECT * FROM users WHERE userid={userid}")
             result = scripts.list_to_json(cur=cur, data=cur.fetchall())
             conn.close()
             return result, 200
@@ -82,11 +82,10 @@ def get_user(username):
         return 'user not found', 200
 
 
-@app.route(f'/api/{VERSION}/users/update', methods=['POST'])
-def update_user():
-    if 'userid' in request.args and 'username' in request.args:
+@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['UPDATE'])
+def update_user(userid):
+    if 'username' in request.args:
         try:
-            userid = request.args['userid']
             username = request.args['username']
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
@@ -105,11 +104,11 @@ def update_user():
         return "Invalid argument", 200
 
 
-@app.route(f'/api/{VERSION}/users/delete/<int:userid>', methods=['GET'])
+@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['DELETE'])
 def delete_user(userid):
     logging.info("Получен запрос на удаление пользователя")
     try:
-        if DBoperators.user_is_available(userid=userid):
+        if dbmethods.user_is_available(userid=userid):
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
             cur.execute(
@@ -125,7 +124,7 @@ def delete_user(userid):
         return e, 400
 
 
-@app.route(f'/api/{VERSION}/users/get/all', methods=['GET'])
+@app.route(f'/api/{VERSION}/users/all', methods=['GET'])
 def get_all_users():
     logging.info("Получен запрос списка пользователей")
     try:
@@ -141,7 +140,25 @@ def get_all_users():
         return e, 400
 
 
-@app.route(f'/api/{VERSION}/tasks/create', methods=['POST'])
+@app.route(f'/api/{VERSION}/users/<int:userid>/tasks', methods=['GET'])
+def get_user_tasks(userid):
+    logging.info("Получен запрос на получение списка задач")
+    try:
+        conn = sqlite3.connect('STM.db', check_same_thread=False)
+        cur = conn.cursor()
+        cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
+        username = cur.fetchone()[0]
+        cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
+        user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
+        logging.info(f"Список задач пользователя {username} предоставлен")
+        conn.commit()
+        conn.close()
+        return user_tasks_list, 200, {'Content-Type': 'application/json; charset=utf-8'}
+    except Exception as e:
+        logging.critical("Исключение при попытке получения задач", exc_info=True)
+        return e, 400
+
+@app.route(f'/api/{VERSION}/tasks', methods=['POST'])
 def create_task():
     logging.info("Получен запрос на добавление задачи")
     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
@@ -176,26 +193,7 @@ def create_task():
         return "Invalid argument", 200
 
 
-@app.route(f'/api/{VERSION}/tasks/get-all/<int:userid>', methods=['GET'])
-def get_all_user_tasks(userid):
-    logging.info("Получен запрос на получение списка задач")
-    try:
-        conn = sqlite3.connect('STM.db', check_same_thread=False)
-        cur = conn.cursor()
-        cur.execute(f"""SELECT username FROM users WHERE userid == {userid}""")
-        username = cur.fetchone()[0]
-        cur.execute(f"""SELECT * FROM tasks WHERE username == '{username}'""")
-        user_tasks_list = scripts.list_to_json(cur, cur.fetchall())
-        logging.info(f"Список задач пользователя {username} предоставлен")
-        conn.commit()
-        conn.close()
-        return user_tasks_list, 200, {'Content-Type': 'application/json; charset=utf-8'}
-    except Exception as e:
-        logging.critical("Исключение при попытке получения задач", exc_info=True)
-        return e, 400
-
-
-@app.route(f'/api/{VERSION}/tasks/get/<int:taskid>', methods=['GET'])
+@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['GET'])
 def get_task(taskid):
     try:
         conn = sqlite3.connect('STM.db', check_same_thread=False)
@@ -210,11 +208,10 @@ def get_task(taskid):
         return e, 400
 
 
-@app.route(f'/api/{VERSION}/tasks/update', methods=['POST'])
-def update_tasks():
-    if 'taskid' in request.args and 'title' in request.args and 'description' in request.args:
+@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['UPDATE'])
+def update_tasks(taskid):
+    if 'title' in request.args and 'description' in request.args:
         try:
-            taskid = request.args['taskid']
             title = request.args['title']
             description = request.args['description']
             conn = sqlite3.connect('STM.db', check_same_thread=False)
@@ -235,10 +232,10 @@ def update_tasks():
         return "Invalid argument", 200
 
 
-@app.route(f'/api/{VERSION}/tasks/delete/<int:taskid>', methods=['GET'])
+@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['DELETE'])
 def delete_task(taskid):
     logging.info("Получен запрос на удаление задачи")
-    if DBoperators.task_is_available(taskid):
+    if dbmethods.task_is_available(taskid):
         try:
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()

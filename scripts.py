@@ -11,4 +11,5 @@ def list_to_json(cur, data: list):
         d = dict(zip(keys, i))
         result.append(d)
     r = json.dumps(result, ensure_ascii=False)
+    r.replace()
     return r
