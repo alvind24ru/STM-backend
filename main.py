@@ -2,7 +2,6 @@ import logging
 from flask import Flask, json, request, jsonify
 
 import dbmethods
-from dbmethods import *
 import sqlite3
 import scripts
 
@@ -37,7 +36,22 @@ except Exception:
 
 app = Flask(__name__)
 
+"""
+@api {post} /user Создание нового пользователя
+@apiName Add User
+@apiGroup Пользователи
 
+@apiParam {String} username Уникальное имя пользователя
+
+@apiSuccess UserObject При удачном создании пользователя возвращается созданный User в виде JSON.
+@apiSuccessExample {json} Success-Response:
+     {
+        "userid": 1,
+        "username": "name"
+    }
+@apiError UsernameError Указанное имя пользователя уже используется.
+@apiError InvalidArguments Указаны не все аргументы.
+"""
 @app.route(f'/api/{VERSION}/users', methods=['POST'])
 def create_user():
     logging.info("Получен запрос создания пользователя")
@@ -64,6 +78,19 @@ def create_user():
         return "InvalidArguments", 200
 
 
+"""
+@api {get} /users/<int:userid> Получение пользователя
+@apiName Get User
+@apiGroup Пользователи
+
+@apiSuccess UserObject При наличии пользователя с данным id возвращает User в виде JSON.
+@apiSuccessExample {json} Success-Response:
+     {
+        "userid": 1,
+        "username": "name"
+    }
+@apiError UserNotFound Указанный id не найден.
+"""
 @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['GET'])
 def get_user(userid):
     logging.info("Получен запрос на получение пользователя")
@@ -81,7 +108,19 @@ def get_user(userid):
     else:
         return 'user not found', 200
 
+"""
+@api {update} /users/<int:userid> Обновление пользователя
+@apiName Update User
+@apiGroup Пользователи
 
+@apiSuccess UserObject При удачном изменении параметров вользователя возвращает объект в виде JSON.
+@apiSuccessExample {json} Success-Response:
+     {
+        "userid": 1,
+        "username": "NewName"
+    }
+@apiError UserNotFound Указанный id не найден.
+"""
 @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['UPDATE'])
 def update_user(userid):
     if 'username' in request.args:
@@ -104,6 +143,14 @@ def update_user(userid):
         return "Invalid argument", 200
 
 
+"""
+@api {delete} /users/<int:userid> Удаление пользователя
+@apiName Delete User
+@apiGroup Пользователи
+
+@apiSuccess UserObject При удачном удалении возвращает сообщение OK со статусом 200.
+@apiError UserNotFound Указанный id не найден.
+"""
 @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['DELETE'])
 def delete_user(userid):
     logging.info("Получен запрос на удаление пользователя")
@@ -123,7 +170,43 @@ def delete_user(userid):
         logging.critical("Исключение при попытке удаления пользователя", exc_info=True)
         return e, 400
 
+"""
+@api {get} /users/all Получение списка пользователей
+@apiName Get Users
+@apiGroup Пользователи
 
+@apiSuccessExample {json} Success-Response:
+     [
+    {
+        "userid": 1,
+        "username": "test12122212212132"
+    },
+    {
+        "userid": 2,
+        "username": "test_user"
+    },
+    {
+        "userid": 3,
+        "username": "vlad loh"
+    },
+    {
+        "userid": 4,
+        "username": "ftest"
+    },
+    {
+        "userid": 5,
+        "username": "ftestdddd"
+    },
+    {
+        "userid": 6,
+        "username": "ftestddddsd"
+    },
+    {
+        "userid": 7,
+        "username": "ftestddddsdsf"
+    }
+]
+"""
 @app.route(f'/api/{VERSION}/users/all', methods=['GET'])
 def get_all_users():
     logging.info("Получен запрос списка пользователей")
@@ -140,6 +223,38 @@ def get_all_users():
         return e, 400
 
 
+"""
+@api {get} /users/<int:userid>/tasks Получение списка задач для пользователя
+@apiName Get user tasks
+@apiGroup Задачи
+
+
+@apiSuccessExample {json} Success-Response:
+     [
+    {
+        "taskid": 4,
+        "username": "test_user",
+        "title": "test_title22",
+        "description": "выпывпывпыв12345поо",
+        "done": "FALSE"
+    },
+    {
+        "taskid": 5,
+        "username": "test_user",
+        "title": "testtttt",
+        "description": "выпывпы",
+        "done": "FALSE"
+    },
+    {
+        "taskid": 6,
+        "username": "test_user",
+        "title": "test_title",
+        "description": "выпывпывпывпывпывп",
+        "done": "FALSE"
+    }
+     ]
+@apiError UserNotFound Указанный id не найден.
+"""
 @app.route(f'/api/{VERSION}/users/<int:userid>/tasks', methods=['GET'])
 def get_user_tasks(userid):
     logging.info("Получен запрос на получение списка задач")
@@ -157,6 +272,23 @@ def get_user_tasks(userid):
     except Exception as e:
         logging.critical("Исключение при попытке получения задач", exc_info=True)
         return e, 400
+
+
+"""
+@api {post} /tasks Добавление задачи
+@apiName Add Task
+@apiGroup Задачи
+
+@apiSuccess UserObject При удачном добавлении задачи возвращает объект в виде JSON.
+@apiSuccessExample {json} Success-Response:
+    {
+    "taskid": 67,
+    "username": "ftest",
+    "title": "new title",
+    "description": "new description",
+    "done": "FALSE"
+    }
+"""
 
 @app.route(f'/api/{VERSION}/tasks', methods=['POST'])
 def create_task():
@@ -193,6 +325,20 @@ def create_task():
         return "Invalid argument", 200
 
 
+"""
+@api {get} /tasks/<int:taskid> Получение задачи
+@apiName Get Task
+@apiGroup Задачи
+
+@apiSuccessExample {json} Success-Response:
+    {
+    "taskid": 67,
+    "username": "ftest",
+    "title": "new title",
+    "description": "new description",
+    "done": "FALSE"
+    }
+"""
 @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['GET'])
 def get_task(taskid):
     try:
@@ -208,6 +354,21 @@ def get_task(taskid):
         return e, 400
 
 
+"""
+@api {update} /tasks Обновление задачи
+@apiName Update Task
+@apiGroup Задачи
+
+@apiSuccess UserObject При удачном обновлении задачи возвращает объект в виде JSON.
+@apiSuccessExample {json} Success-Response:
+    {
+    "taskid": 67,
+    "username": "ftest",
+    "title": "new title",
+    "description": "new description",
+    "done": "FALSE"
+    }
+"""
 @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['UPDATE'])
 def update_tasks(taskid):
     if 'title' in request.args and 'description' in request.args:
@@ -231,7 +392,14 @@ def update_tasks(taskid):
         logging.info("Не все необходимые аргументы найдены")
         return "Invalid argument", 200
 
+"""
+@api {delete} /tasks Удаление задачи
+@apiName Delete Task
+@apiGroup Задачи
 
+@apiSuccessExample {json} Success-Response:
+    OK
+"""
 @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['DELETE'])
 def delete_task(taskid):
     logging.info("Получен запрос на удаление задачи")
