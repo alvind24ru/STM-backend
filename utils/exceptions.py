@@ -17,3 +17,16 @@ class TaskException(Exception):
 
     def __init__(self, text: str = ''):
         self.text = text
+
+
+class ViewException(Exception):
+    """Исключения в Presentation"""
+
+    def __init__(self, text: str = ''):
+        self.text = text
+
+
+class UserException(Exception):
+    def __init__(self, text: str = ''):
+        self.text = text
+

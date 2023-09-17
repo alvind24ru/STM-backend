@@ -1,3 +1,6 @@
+from utils.exceptions import DBException, TaskException
+
+
 def handler_exception(e: Exception): # TODO Сначала логгировать
     if type(e) == DBException:
         return e.text, 400
