@@ -1,15 +1,11 @@
 import logging
 from flask import Flask, json, request, jsonify
-
+from utils.constants import *
 import dbmethods
 import sqlite3
 import scripts
-
-# TODO Найти нормальную библиотеку для сериализации данных из БД в JSON
-with open('apidoc.json') as file:
-    data = json.load(file)
-
-VERSION = 'v' + data['version']
+from utils.flask import app
+import tasks
 
 logging.basicConfig(level=logging.INFO, filename="py_log.log",
                     format="%(asctime)s %(levelname)s %(message)s")
@@ -34,7 +30,7 @@ try:
 except Exception:
     logging.critical("Исключение при создании БД", exc_info=True)
 
-app = Flask(__name__)
+
 
 """
 @api {post} /user Создание нового пользователя
@@ -52,30 +48,8 @@ app = Flask(__name__)
 @apiError UsernameError Указанное имя пользователя уже используется.
 @apiError InvalidArguments Указаны не все аргументы.
 """
-@app.route(f'/api/{VERSION}/users', methods=['POST'])
-def create_user():
-    logging.info("Получен запрос создания пользователя")
-    if 'username' in request.args:
-        try:
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            username = request.args['username']
-            cur.execute(f"""INSERT INTO users(username) 
-            VALUES('{username}');""")
-            conn.commit()
-            cur.execute(f"SELECT * FROM users WHERE username='{username}'")
-            created_user = scripts.list_to_json(cur=cur, data=cur.fetchall())
-            conn.close()
-            return created_user, 200
-        except sqlite3.IntegrityError:
-            logging.error("Указанное имя пользователя уже имеется", exc_info=True)
-            return 'the username is already in use', 200
-        except Exception as e:
-            logging.critical("Исключение при запросе на добавление пользователя", exc_info=True)
-            return e, 400
-    else:
-        logging.info("Не все необходимые аргументы найдены")
-        return "InvalidArguments", 200
+# @app.route(f'/api/{VERSION}/users', methods=['POST'])
+
 
 
 """
@@ -91,22 +65,22 @@ def create_user():
     }
 @apiError UserNotFound Указанный id не найден.
 """
-@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['GET'])
-def get_user(userid):
-    logging.info("Получен запрос на получение пользователя")
-    if dbmethods.user_is_available(userid=userid):
-        try:
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute(f"SELECT * FROM users WHERE userid={userid}")
-            result = scripts.list_to_json(cur=cur, data=cur.fetchall())
-            conn.close()
-            return result, 200
-        except Exception as e:
-            logging.critical("Исключение при запросе получения пользователя", exc_info=True)
-            return e, 400
-    else:
-        return 'user not found', 200
+# @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['GET'])
+# def get_user(userid):
+#     logging.info("Получен запрос на получение пользователя")
+#     if dbmethods.user_is_available(userid=userid):
+#         try:
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute(f"SELECT * FROM users WHERE userid={userid}")
+#             result = scripts.list_to_json(cur=cur, data=cur.fetchall())
+#             conn.close()
+#             return result, 200
+#         except Exception as e:
+#             logging.critical("Исключение при запросе получения пользователя", exc_info=True)
+#             return e, 400
+#     else:
+#         return 'user not found', 200
 
 """
 @api {update} /users/<int:userid> Обновление пользователя
@@ -121,26 +95,26 @@ def get_user(userid):
     }
 @apiError UserNotFound Указанный id не найден.
 """
-@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['UPDATE'])
-def update_user(userid):
-    if 'username' in request.args:
-        try:
-            username = request.args['username']
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute(f"""UPDATE users SET username = '{username}' WHERE userid = {userid}""")
-            conn.commit()
-            cur.execute(f"""SELECT * FROM users WHERE userid = {userid}""")
-            result = scripts.list_to_json(cur, cur.fetchall())
-            conn.commit()
-            conn.close()
-            return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
-        except Exception as e:
-            logging.critical("Исключение при попытке изменения пользователя", exc_info=True)
-            return e, 400
-    else:
-        logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument", 200
+# @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['UPDATE'])
+# def update_user(userid):
+#     if 'username' in request.args:
+#         try:
+#             username = request.args['username']
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute(f"""UPDATE users SET username = '{username}' WHERE userid = {userid}""")
+#             conn.commit()
+#             cur.execute(f"""SELECT * FROM users WHERE userid = {userid}""")
+#             result = scripts.list_to_json(cur, cur.fetchall())
+#             conn.commit()
+#             conn.close()
+#             return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
+#         except Exception as e:
+#             logging.critical("Исключение при попытке изменения пользователя", exc_info=True)
+#             return e, 400
+#     else:
+#         logging.info("Не все необходимые аргументы найдены")
+#         return "Invalid argument", 200
 
 
 """
@@ -151,24 +125,24 @@ def update_user(userid):
 @apiSuccess UserObject При удачном удалении возвращает сообщение OK со статусом 200.
 @apiError UserNotFound Указанный id не найден.
 """
-@app.route(f'/api/{VERSION}/users/<int:userid>', methods=['DELETE'])
-def delete_user(userid):
-    logging.info("Получен запрос на удаление пользователя")
-    try:
-        if dbmethods.user_is_available(userid=userid):
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute(
-                f"""DELETE FROM users WHERE userid = {userid}""")
-            logging.info(f"Пользователь с ID {userid} удален")
-            conn.commit()
-            conn.close()
-            return 'OK', 200
-        else:
-            return 'there is no user with this id', 200
-    except Exception as e:
-        logging.critical("Исключение при попытке удаления пользователя", exc_info=True)
-        return e, 400
+# @app.route(f'/api/{VERSION}/users/<int:userid>', methods=['DELETE'])
+# def delete_user(userid):
+#     logging.info("Получен запрос на удаление пользователя")
+#     try:
+#         if dbmethods.user_is_available(userid=userid):
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute(
+#                 f"""DELETE FROM users WHERE userid = {userid}""")
+#             logging.info(f"Пользователь с ID {userid} удален")
+#             conn.commit()
+#             conn.close()
+#             return 'OK', 200
+#         else:
+#             return 'there is no user with this id', 200
+#     except Exception as e:
+#         logging.critical("Исключение при попытке удаления пользователя", exc_info=True)
+#         return e, 400
 
 """
 @api {get} /users/all Получение списка пользователей
@@ -290,39 +264,39 @@ def get_user_tasks(userid):
     }
 """
 
-@app.route(f'/api/{VERSION}/tasks', methods=['POST'])
-def create_task():
-    logging.info("Получен запрос на добавление задачи")
-    if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
-        try:
-            username = request.args['username']
-            title = request.args['title']
-            description = request.args['description']
-            done = request.args['done']
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute("""SELECT username FROM users""")
-            username_list = cur.fetchall()
-            for i in range(len(username_list)):
-                if username == username_list[i][0]:
-                    cur.execute(f"""INSERT INTO tasks(username, title, description, done) 
-                        VALUES('{username}', '{title}', '{description}', '{done}');""")
-                    conn.commit()
-                    cur.execute(f"""SELECT * FROM tasks WHERE username = '{username}' AND taskid = (SELECT max(taskid) 
-                    FROM tasks WHERE username = '{username}')""")
-                    task = scripts.list_to_json(cur, cur.fetchall())
-                    conn.close()
-                    logging.info("Добавлена задача")
-                    return task, 200
-            else:
-                logging.info("данный username не найден для добавления задачи")
-                return f"User {username} is not found!"
-        except Exception as e:
-            logging.critical("Исключение при добавлении задачи", exc_info=True)
-            return e, 400
-    else:
-        logging.info("Не все необходимые аргументы найдены")
-        return "Invalid argument", 200
+# @app.route(f'/api/{VERSION}/tasks', methods=['POST'])
+# def create_task():
+#     logging.info("Получен запрос на добавление задачи")
+#     if 'username' in request.args and 'title' in request.args and 'description' in request.args and 'done' in request.args:
+#         try:
+#             username = request.args['username']
+#             title = request.args['title']
+#             description = request.args['description']
+#             done = request.args['done']
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute("""SELECT username FROM users""")
+#             username_list = cur.fetchall()
+#             for i in range(len(username_list)):
+#                 if username == username_list[i][0]:
+#                     cur.execute(f"""INSERT INTO tasks(username, title, description, done)
+#                         VALUES('{username}', '{title}', '{description}', '{done}');""")
+#                     conn.commit()
+#                     cur.execute(f"""SELECT * FROM tasks WHERE username = '{username}' AND taskid = (SELECT max(taskid)
+#                     FROM tasks WHERE username = '{username}')""")
+#                     task = scripts.list_to_json(cur, cur.fetchall())
+#                     conn.close()
+#                     logging.info("Добавлена задача")
+#                     return task, 200
+#             else:
+#                 logging.info("данный username не найден для добавления задачи")
+#                 return f"User {username} is not found!"
+#         except Exception as e:
+#             logging.critical("Исключение при добавлении задачи", exc_info=True)
+#             return e, 400
+#     else:
+#         logging.info("Не все необходимые аргументы найдены")
+#         return "Invalid argument", 200
 
 
 """
@@ -339,19 +313,19 @@ def create_task():
     "done": "FALSE"
     }
 """
-@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['GET'])
-def get_task(taskid):
-    try:
-        conn = sqlite3.connect('STM.db', check_same_thread=False)
-        cur = conn.cursor()
-        cur.execute(f"""SELECT * FROM tasks WHERE taskid == {taskid}""")
-        result = scripts.list_to_json(cur, cur.fetchall())
-        conn.commit()
-        conn.close()
-        return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
-    except Exception as e:
-        logging.critical("Исключение при попытке получения задачи", exc_info=True)
-        return e, 400
+# @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['GET'])
+# def get_task(taskid):
+#     try:
+#         conn = sqlite3.connect('STM.db', check_same_thread=False)
+#         cur = conn.cursor()
+#         cur.execute(f"""SELECT * FROM tasks WHERE taskid == {taskid}""")
+#         result = scripts.list_to_json(cur, cur.fetchall())
+#         conn.commit()
+#         conn.close()
+#         return result, 200, {'Content-Type': 'application/json; charset=utf-8'}
+#     except Exception as e:
+#         logging.critical("Исключение при попытке получения задачи", exc_info=True)
+#         return e, 400
 
 
 """
@@ -377,8 +351,7 @@ def update_tasks(taskid):
             description = request.args['description']
             conn = sqlite3.connect('STM.db', check_same_thread=False)
             cur = conn.cursor()
-            cur.execute(f"""UPDATE tasks SET title = '{title}' WHERE taskid = {taskid}""")
-            cur.execute(f"""UPDATE tasks SET description = '{description}' WHERE taskid = {taskid}""")
+            cur.execute(f"""UPDATE tasks SET title = '{title}', description = '{description} WHERE taskid = {taskid}""")
             conn.commit()
             cur.execute(f"""SELECT * FROM tasks WHERE taskid = {taskid}""")
             result = scripts.list_to_json(cur, cur.fetchall())
@@ -400,28 +373,35 @@ def update_tasks(taskid):
 @apiSuccessExample {json} Success-Response:
     OK
 """
-@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['DELETE'])
-def delete_task(taskid):
-    logging.info("Получен запрос на удаление задачи")
-    if dbmethods.task_is_available(taskid):
-        try:
-            conn = sqlite3.connect('STM.db', check_same_thread=False)
-            cur = conn.cursor()
-            cur.execute(
-                f"""DELETE FROM tasks WHERE taskid = {taskid}""")
-            logging.info(f"Задача с ID {taskid} удалена")
-            conn.commit()
-            conn.close()
-            return 'OK', 200
-        except Exception as e:
-            logging.critical("Исключение при попытке удаления задачи", exc_info=True)
-            return e, 400
-    else:
-        return 'there is no task with this id', 200
+# @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['DELETE'])
+# def delete_task(taskid):
+#     logging.info("Получен запрос на удаление задачи")
+#     if dbmethods.task_is_available(taskid):
+#         try:
+#             conn = sqlite3.connect('STM.db', check_same_thread=False)
+#             cur = conn.cursor()
+#             cur.execute(
+#                 f"""DELETE FROM tasks WHERE taskid = {taskid}""")
+#             logging.info(f"Задача с ID {taskid} удалена")
+#             conn.commit()
+#             conn.close()
+#             return 'OK', 200
+#         except Exception as e:
+#             logging.critical("Исключение при попытке удаления задачи", exc_info=True)
+#             return e, 400
+#     else:
+#         return 'there is no task with this id', 200
 
-@app.route('/test', methods=['GET'])
-def test():
-    return 'True'
+# @app.route(f'/api/{VERSION}/test', methods=['GET'])
+# def test():
+#     return 'True'
+
+
+
+
+
+
+
 
 
 if __name__ == '__main__':
