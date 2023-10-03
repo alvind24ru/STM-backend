@@ -6,7 +6,7 @@ from utils.constants import TEST_DATABASE_PATH
 from users.models import User
 
 
-class UsersDatabaseTests(unittest.TestCase):
+class Test_UsersDatabaseTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
@@ -45,6 +45,9 @@ class UsersDatabaseTests(unittest.TestCase):
         res = self.database.get_all_users()
         self.assertIsNotNone(res)
         self.assertEqual(len(res), 3)
+    
+    def sdasda_test(self):
+        print(1)
 
 
 if __name__ == '__main__':

@@ -19,7 +19,7 @@ def get_task(taskid):
     try:
         return api.get_task(taskid), 200, HEADERS
     except Exception as e:
-        handler_exception(e)
+        return handler_exception(e)
 
 
 @app.route(f'/api/{VERSION}/tasks/', methods=['POST'])
@@ -27,7 +27,7 @@ def create_task():
     try:
         return api.create_task(request.args), 200, HEADERS
     except Exception as e:
-        handler_exception(e)
+        return handler_exception(e)
 
 
 @app.route(f'/api/{VERSION}/tasks/', methods=['PATCH'])
@@ -35,7 +35,7 @@ def update_task():
     try:
         return api.update_task(request.args), 200, HEADERS
     except Exception as e:
-        handler_exception(e)
+        return handler_exception(e)
 
 
 @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['DELETE'])
@@ -43,7 +43,7 @@ def delete_task(taskid):
     try:
         return api.delete_task(taskid), 200, HEADERS
     except Exception as e:
-        handler_exception(e)
+        return handler_exception(e)
 
 
 @app.route(f'/api/{VERSION}/tasks/all/<int:userid>', methods=['GET'])
@@ -51,4 +51,4 @@ def get_all_user_tasks(userid):
     try:
         return api.get_all_user_tasks(userid), 200, HEADERS
     except Exception as e:
-        handler_exception(e)
+        return handler_exception(e)

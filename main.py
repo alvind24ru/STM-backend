@@ -2,11 +2,12 @@ import logging
 import os
 import unittest
 from flask import Flask, json, request, jsonify
+from utils.exceprion_mapper import handler_exception
 
 import appDB
 from appDB import init_database
 from utils.constants import *
-import dbmethods
+# import dbmethods
 import sqlite3
 import scripts
 from utils.flask import app
@@ -25,8 +26,10 @@ def test_method():
 
 if __name__ == '__main__':
     appDB.init_database(app.config.get('DATABASE_URL'))
-    app.run(debug=True)
-
+    try:
+        app.run(debug=True)
+    except Exception as e:
+        handler_exception(e)
 """
 @api {post} /user Создание нового пользователя
 @apiName Add User

@@ -43,9 +43,6 @@ class TaskPresentation:
         self.__users_domain.check_user_id_or_except(userid)
         return self.__domain.get_all_user_tasks(userid)
 
-
-
-
     @staticmethod
     def __task_to_json(task: Task) -> str:
         return f"""{{"{TASKID}": {task.id},
