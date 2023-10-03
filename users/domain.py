@@ -31,5 +31,10 @@ class UsersDomain:
             raise UserException('Нет удаляемого пользователя')
 
     def get_all_users(self):
-        print('domain')
         return self.__database.get_all_users()
+
+    def check_user_id_or_except(self, userid: int):
+        if self.__database.user_is_available(userid):
+            return
+        else:
+            raise UserException(f'Пользователя c {userid} не существует')

@@ -24,7 +24,7 @@ def get_user(userid):
         handler_exception(e)
 
 
-@app.route(f'/api/{VERSION}/users/', methods=['UPDATE'])
+@app.route(f'/api/{VERSION}/users/', methods=['PATCH'])
 def update_user():
     try:
         return api.update_user(request.args), 200, HEADERS
@@ -43,15 +43,6 @@ def delete_user(userid):
 @app.route(f'/api/{VERSION}/users/get-all', methods=['GET'])
 def get_all_users():
     try:
-        print('init')
         return api.get_all_users(), 200, HEADERS
-    except Exception as e:
-        handler_exception(e)
-
-
-@app.route(f'/api/{VERSION}/users/<int:userid>/tasks', methods=['GET'])
-def get_all_user_tasks(userid):
-    try:
-        return api.get_all_user_tasks(userid), 200, HEADERS
     except Exception as e:
         handler_exception(e)

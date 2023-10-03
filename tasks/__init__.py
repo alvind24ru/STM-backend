@@ -13,6 +13,7 @@ from utils.constants import *
 
 api = di.presentation
 
+
 @app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['GET'])
 def get_task(taskid):
     try:
@@ -29,7 +30,7 @@ def create_task():
         handler_exception(e)
 
 
-@app.route(f'/api/{VERSION}/tasks/<int:taskid>', methods=['UPDATE'])
+@app.route(f'/api/{VERSION}/tasks/', methods=['PATCH'])
 def update_task():
     try:
         return api.update_task(request.args), 200, HEADERS
@@ -41,5 +42,13 @@ def update_task():
 def delete_task(taskid):
     try:
         return api.delete_task(taskid), 200, HEADERS
+    except Exception as e:
+        handler_exception(e)
+
+
+@app.route(f'/api/{VERSION}/tasks/all/<int:userid>', methods=['GET'])
+def get_all_user_tasks(userid):
+    try:
+        return api.get_all_user_tasks(userid), 200, HEADERS
     except Exception as e:
         handler_exception(e)

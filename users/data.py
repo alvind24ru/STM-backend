@@ -15,13 +15,13 @@ class UsersDB:
         try:
             conn = sqlite3.connect(self.__db_name, check_same_thread=False)
             cur = conn.cursor()
-            cur.execute(f"""INSERT INTO users(username) VALUES('{User.username}')""")
+            cur.execute(f"""INSERT INTO users(username) VALUES('{user.username}')""")
             conn.commit()
-            cur.execute(f"SELECT * FROM users WHERE username='{User.username}'")
+            cur.execute(f"SELECT * FROM users WHERE username='{user.username}'")
             db_result = cur.fetchall()
             conn.close()
             logging.log_info(f'Выполнено создание пользователя {user.username}')
-            return self.__read_user(db_result)
+            return self.__list_to_object(db_result[0])
         except Exception as ex:
             raise DBException(ex,
                               f"Исключение при попытке создания пользователя с id {user.userid} и именем {user.username}")
@@ -33,10 +33,10 @@ class UsersDB:
             cur.execute(f"SELECT * FROM users WHERE userid={userid}")
             db_result = cur.fetchall()
             conn.close()
-            logging.log_info(f'Выполнен запрос на получение пользователя {userid}')
-            return self.__read_user(db_result)
+            logging.log_info(f'Выполнен запрос на получение пользователя c id {userid}')
+            return self.__list_to_object(db_result[0])
         except Exception as ex:
-            raise DBException(ex, f"Исключение при получении пользователя {userid}")
+            raise DBException(ex, f"Исключение при получении пользователя c id {userid}")
 
     def update_user(self, user: User) -> User:
         try:
@@ -48,7 +48,7 @@ class UsersDB:
             db_result = cur.fetchall()
             conn.close()
             logging.log_info(f'Выполнено обновление пользователя {user.username}')
-            return self.__read_user(db_result)
+            return self.__list_to_object(db_result[0])
         except Exception as ex:
             raise DBException(ex, f"Исключение при обновлении пользователя {user.username}")
 
@@ -85,20 +85,19 @@ class UsersDB:
             conn.close()
             logging.log_info(f'Выполнен запрос на получение всех пользователей')
             res = []
+            logging.log_info(f'Получен список всех пользователей: {data}')
             for i in data:
-                res.append(self.__read_user(i))
-            print('database')
+                res.append(self.__list_to_object(i))
             return res
         except Exception as ex:
-            raise DBException(ex, f"Исключение при получении всех пользователей")
+            raise DBException(ex, f"Исключение в БД при получении всех пользователей")
 
     @staticmethod
-    def __read_user(data: list) -> User:
+    def __list_to_object(data: list) -> User:
         """Преобразует входные данные вида list в объект User"""
+        logging.log_info(f'Преобразование в объект данных: {data}, {type(data)}')
         user = User()
-        user.id = data[0][0]
-        user.username = data[0][1]
-        user.title = data[0][2]
-        user.description = data[0][3]
-        user.done = data[0][4]
+        user.userid = data[0]
+        user.username = data[1]
+        logging.log_info(f'Преобразованные данные: {user}')
         return user

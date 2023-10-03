@@ -1,8 +1,18 @@
-from utils.exceptions import DBException, TaskException
+import logging
+
+from utils.exceptions import *
 
 
-def handler_exception(e: Exception): # TODO Сначала логгировать
+def handler_exception(e: Exception):
     if type(e) == DBException:
-        return e.text, 400
-    if type(e) == TaskException:
-        pass
+        logging.critical(f'Исключение при работе с БД: {e}')
+        return e, 400
+    elif type(e) == TaskException:
+        logging.critical(f'Исключение при работе со слоем доменной логики Domain задач: {e}')
+        return e, 400
+    elif type(e) == UserException:
+        logging.critical(f'Исключение при работе со слоем доменной логики Domain пользователей: {e}')
+        return e, 400
+    else:
+        logging.critical(f'Неожиданное исключение: {e}')
+        return e, 400

@@ -19,14 +19,13 @@ except Exception:
     logging.critical("Исключение при создании БД", exc_info=True)
 
 
-@app.route(f'/api/{VERSION}/test', methods=['GET'])
+@app.route(f'/test', methods=['GET'])
 def test():
     return 'True'
 
 
 if __name__ == '__main__':
-    print('start')
-    app.run(debug=True, port=5000)
+    app.run(debug=True)
 
 """
 @api {post} /user Создание нового пользователя

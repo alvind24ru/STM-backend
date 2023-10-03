@@ -23,7 +23,7 @@ class TaskDB:
             db_result = cur.fetchall()
             conn.close()
             logging.log_info(f"Пользователю {task.username} добавлена задача c идентификатором {task.id}")
-            return self.__read_task(db_result)
+            return self.__read_task(db_result[0])
         except Exception as ex:
             raise DBException(ex, f"Исключение при попытке создания задачи с id {task.id} пользователя {task.username}")
 
@@ -35,7 +35,7 @@ class TaskDB:
             db_result = cur.fetchall()
             conn.close()
             logging.log_info(f"Выполнен запрос на задачу с id {taskid}")
-            return self.__read_task(db_result)
+            return self.__read_task(db_result[0])
         except Exception as ex:
             raise DBException(ex, f"Исключение при попытке получения задачи с id {taskid}")
 
@@ -44,9 +44,9 @@ class TaskDB:
             conn = sqlite3.connect(self.__db_name, check_same_thread=False)
             cur = conn.cursor()
             cur.execute(f"""UPDATE tasks SET 
-                        username = {task.username},
-                        title = {task.title},
-                        description = {task.description},
+                        username = '{task.username}',
+                        title = '{task.title}',
+                        description = '{task.description}',
                         done = {task.done} WHERE taskid = {task.id}""")
             conn.commit()
             conn.close()
@@ -84,9 +84,12 @@ class TaskDB:
     def __read_task(data: list) -> Task:
         """Преобразует входные данные вида list в объект Task"""
         task = Task()
-        task.id = data[0][0]
-        task.username = data[0][1]
-        task.title = data[0][2]
-        task.description = data[0][3]
-        task.done = data[0][4]
+        task.id = data[0]
+        task.username = data[1]
+        task.title = data[2]
+        task.description = data[3]
+        task.done = data[4]
         return task
+
+    def get_all_user_tasks(self, userid) -> list:
+        pass

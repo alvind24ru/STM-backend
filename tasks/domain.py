@@ -29,9 +29,12 @@ class TaskDomain:
         if self.__database.task_is_available(taskid):
             result = self.__database.delete_task(taskid)
             if result:
-                return result
+                return str(result)
         else:
             raise TaskException('Нет удаляемой задачи')
+
+    def get_all_user_tasks(self, userid: int) -> list:
+        self.__database.get_all_user_tasks(userid)
 
 
 
