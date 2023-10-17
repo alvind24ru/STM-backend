@@ -1,6 +1,9 @@
 import logging
+import os
+import unittest
 from flask import Flask, json, request, jsonify
 
+import appDB
 from appDB import init_database
 from utils.constants import *
 import dbmethods
@@ -13,18 +16,15 @@ import users
 logging.basicConfig(level=logging.INFO, filename="py_log.log",
                     format="%(asctime)s %(levelname)s %(message)s")
 logging.info("___________________________________Сервер начал работу___________________________________")
-try:
-    init_database(DATABASE_NAME)
-except Exception:
-    logging.critical("Исключение при создании БД", exc_info=True)
-
+app.config['DATABASE_URL'] = DATABASE_PATH
 
 @app.route(f'/test', methods=['GET'])
-def test():
+def test_method():
     return 'True'
 
 
 if __name__ == '__main__':
+    appDB.init_database(app.config.get('DATABASE_URL'))
     app.run(debug=True)
 
 """

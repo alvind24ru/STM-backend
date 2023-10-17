@@ -8,7 +8,7 @@ from utils.flask import app
 api = di.presentation
 
 
-@app.route(f'/api/{VERSION}/users/', methods=['POST'])
+@app.route(f'/api/{VERSION}/users/', methods=['POST', 'GET'])
 def create_user():
     try:
         return api.create_user(request.args), 200, HEADERS

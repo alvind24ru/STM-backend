@@ -15,8 +15,8 @@ class TaskDB:
         try:
             conn = sqlite3.connect(self.__db_name, check_same_thread=False)
             cur = conn.cursor()
-            cur.execute(f"""INSERT INTO tasks (username, title, description, done) 
-                VALUES('{task.username}', '{task.title}', '{task.description}', '{task.done}');""")
+            cur.execute(f"INSERT INTO tasks (username, title, description, done) \n"
+                        f"VALUES('{task.username}', '{task.title}', '{task.description}', '{task.done}');")
             conn.commit()  # TODO найти как сразу получать созданную таску
             cur.execute(f"""SELECT * FROM tasks WHERE username = '{task.username}' AND taskid = (SELECT max(taskid)
             FROM tasks WHERE username = '{task.username}')""")

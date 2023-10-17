@@ -23,6 +23,8 @@ def user_is_available(userid=None, username=None):
             return False
     except Exception:
         pass
+
+
 def task_is_available(taskid):
     conn = sqlite3.connect('STM.db', check_same_thread=False)
     cur = conn.cursor()
