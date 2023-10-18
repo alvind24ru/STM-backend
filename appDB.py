@@ -1,4 +1,5 @@
 import logging
+import os
 import sqlite3
 
 
@@ -24,12 +25,9 @@ def init_database(dbname):
         logging.critical("Исключение при создании БД", exc_info=True)
 
 
-def drop_all(dbname):
+def delete_database(dbname):
     try:
-        conn = sqlite3.connect(dbname, check_same_thread=False)
-        cur = conn.cursor()
-        cur.execute("""DELETE FROM users WHERE type='table';""")
-        conn.commit()
-        conn.close()
+        os.remove(dbname)
     except Exception:
-        logging.critical("Исключение при создании БД", exc_info=True)
+        logging.critical("Исключение при БД", exc_info=True)
+

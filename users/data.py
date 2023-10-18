@@ -39,6 +39,7 @@ class UsersDB:
             raise DBException(ex, f"Исключение при получении пользователя c id {userid}")
 
     def update_user(self, user: User) -> User:
+        """Обновляет все данные кроме id, возвращает обновленный объект"""
         try:
             conn = sqlite3.connect(self.__db_name, check_same_thread=False)
             cur = conn.cursor()

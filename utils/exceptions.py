@@ -1,4 +1,4 @@
-from tasks.models import Task
+#from tasks.models import Task
 
 
 class DBException(Exception):

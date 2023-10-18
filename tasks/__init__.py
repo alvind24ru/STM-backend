@@ -1,5 +1,5 @@
-import tasks.presentation
-from . import di
+# import tasks.presentation
+from tasks import di
 import json
 from flask import request
 from utils.exceprion_mapper import handler_exception

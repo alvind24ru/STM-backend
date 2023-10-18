@@ -40,6 +40,7 @@ class TaskDB:
             raise DBException(ex, f"Исключение при попытке получения задачи с id {taskid}")
 
     def update_task(self, task: Task) -> Task:
+        """Обновляет все кроме id"""
         try:
             conn = sqlite3.connect(self.__db_name, check_same_thread=False)
             cur = conn.cursor()
@@ -69,6 +70,19 @@ class TaskDB:
         except Exception as ex:
             raise DBException(ex, f"Исключение при попытке удаления задачи с id {taskid}")
 
+    def get_all_user_tasks(self, username:str) -> list:
+        try:
+            conn = sqlite3.connect(self.__db_name, check_same_thread=False)
+            cur = conn.cursor()
+            cur.execute(f"""SELECT * FROM tasks WHERE username = '{username}'""")
+            db_result = cur.fetchall()
+            conn.commit()
+            conn.close()
+            logging.log_info(f"Предоставлены все задачи пользователя с именем {username}")
+            return db_result
+        except Exception as ex:
+            raise DBException(ex, f"Исключение при попытке получения всех задач пользователя с именем: {username}")
+
     def task_is_available(self, taskid: int) -> bool:
         conn = sqlite3.connect(self.__db_name, check_same_thread=False)
         cur = conn.cursor()
@@ -80,7 +94,7 @@ class TaskDB:
         else:
             return False
 
-    @staticmethod  # TODO разобраться в статикметодах и классметодАХ
+    @staticmethod
     def __read_task(data: list) -> Task:
         """Преобразует входные данные вида list в объект Task"""
         task = Task()
@@ -91,5 +105,4 @@ class TaskDB:
         task.done = data[4]
         return task
 
-    def get_all_user_tasks(self, userid) -> list:
-        pass
+

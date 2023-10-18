@@ -1,6 +1,6 @@
 from tasks.domain import *
 from tasks.models import *
-from users import UsersDomain
+from users.domain import UsersDomain
 
 TASKID = 'id'
 USERNAME = 'username'
@@ -39,7 +39,7 @@ class TaskPresentation:
     def delete_task(self, taskid: int) -> str:
         return self.__domain.delete_tasks(taskid)
 
-    def get_all_user_tasks(self, userid: int) -> str:
+    def get_all_user_tasks(self, userid: int) -> list:
         self.__users_domain.check_user_id_or_except(userid)
         return self.__domain.get_all_user_tasks(userid)
 

@@ -1,6 +1,4 @@
-from . import data
-from . import domain
-from .presentation import *
+from tasks.presentation import *
 from utils.constants import *
 from users.di import domain
 
