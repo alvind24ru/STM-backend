@@ -1,4 +1,3 @@
-#from tasks.models import Task
 
 
 class DBException(Exception):
@@ -13,15 +12,12 @@ class DBException(Exception):
 
 class TaskException(Exception):
     """Исключения доменной логики domain"""
-    text: str
-
     def __init__(self, text: str = ''):
         self.text = text
 
 
 class ViewException(Exception):
     """Исключения в Presentation"""
-
     def __init__(self, text: str = ''):
         self.text = text
 
@@ -29,4 +25,3 @@ class ViewException(Exception):
 class UserException(Exception):
     def __init__(self, text: str = ''):
         self.text = text
-
