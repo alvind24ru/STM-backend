@@ -1,0 +1,8 @@
+*.db
+*.log
+STMvenv
+.idea
+__pycache__
+doc
+apidoc
+.vscode
