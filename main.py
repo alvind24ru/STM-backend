@@ -1,6 +1,8 @@
 import logging
 import os
 import unittest
+
+import werkzeug.security
 from flask import Flask, json, request, jsonify
 from utils.exceprion_mapper import handler_exception
 
@@ -30,6 +32,18 @@ if __name__ == '__main__':
         app.run(debug=True)
     except Exception as e:
         handler_exception(e)
+
+
+
+class AbsTest:
+    ...
+
+
+
+
+
+
+
 """
 @api {post} /user Создание нового пользователя
 @apiName Add User
