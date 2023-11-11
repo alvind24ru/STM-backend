@@ -19,7 +19,7 @@ import users
 logging.basicConfig(level=logging.INFO, filename="py_log.log",
                     format="%(asctime)s %(levelname)s %(message)s")
 logging.info("___________________________________Сервер начал работу___________________________________")
-app.config['DATABASE_URL'] = DATABASE_PATH
+app.config['DATABASE_URL'] = DATABASE
 
 @app.route(f'/test', methods=['GET'])
 def test_method():
@@ -27,8 +27,8 @@ def test_method():
 
 
 if __name__ == '__main__':
-    appDB.init_database(app.config.get('DATABASE_URL'))
     try:
+        appDB.init_database(app.config.get('DATABASE_URL'))
         print('Start...')
         app.run(debug=True, host='0.0.0.0')
     except Exception as e:

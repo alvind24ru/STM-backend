@@ -4,7 +4,7 @@ from users.di import domain
 
 "dependency injection инъекция зависимостей"
 
-database = TaskDB(DATABASE_PATH)
+database = TaskDB(DATABASE)
 task_domain = TaskDomain(database)
 user_domain = domain
 presentation = TaskPresentation(task_domain, user_domain)

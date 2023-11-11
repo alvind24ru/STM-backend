@@ -2,7 +2,7 @@ import unittest
 from appDB import delete_database
 from users.data import UsersDB
 from tests.init_test_database import init_test_database
-from utils.constants import TEST_DATABASE_PATH
+from utils.constants import TEST_DATABASE
 from users.models import User
 
 
@@ -10,14 +10,14 @@ class Test_UsersDatabaseTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        init_test_database(TEST_DATABASE_PATH)
+        init_test_database(TEST_DATABASE)
 
     @classmethod
     def tearDownClass(cls):
-        delete_database(TEST_DATABASE_PATH)
+        delete_database(TEST_DATABASE)
 
     def setUp(self):
-        self.database = UsersDB(TEST_DATABASE_PATH)
+        self.database = UsersDB(TEST_DATABASE)
 
     def test_create_user(self):
         user = User(username='test_user5')

@@ -3,7 +3,7 @@ import unittest
 from appDB import delete_database
 from tasks import Task
 from tests.init_test_database import init_test_database
-from utils.constants import TEST_DATABASE_PATH
+from utils.constants import TEST_DATABASE
 from tasks.data import TaskDB
 
 
@@ -11,14 +11,14 @@ class TasksDatabaseTests(unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        init_test_database(TEST_DATABASE_PATH)
+        init_test_database(TEST_DATABASE)
 
     @classmethod
     def tearDownClass(cls):
-        delete_database(TEST_DATABASE_PATH)
+        delete_database(TEST_DATABASE)
 
     def setUp(self):
-        self.database = TaskDB(TEST_DATABASE_PATH)
+        self.database = TaskDB(TEST_DATABASE)
 
     def test_create_task(self):
         task = Task(username='new_test_user', title='new_title', description='new_desc', done=True)
