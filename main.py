@@ -29,7 +29,7 @@ def test_method():
 if __name__ == '__main__':
     appDB.init_database(app.config.get('DATABASE_URL'))
     try:
-        print('Start...')
+        print('Start...111')
         app.run(debug=True, host='0.0.0.0')
     except Exception as e:
         handler_exception(e)
