@@ -6,5 +6,4 @@ RUN apt update -y && apt install git python3 pip -y && git clone https://github.
 
 EXPOSE 5000
 
-CMD git pull
-CMD python3 STM-backend/main.py
+CMD git -C ./STM-backend pull && python3 STM-backend/main.py
