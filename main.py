@@ -23,7 +23,7 @@ app.config['DATABASE_URL'] = DATABASE
 
 @app.route(f'/test', methods=['GET'])
 def test_method():
-    return 'True'
+    return 'True hui'
 
 
 if __name__ == '__main__':
