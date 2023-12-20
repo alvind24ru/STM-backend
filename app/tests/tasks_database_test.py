@@ -1,11 +1,9 @@
-import unittest
-
-from appDB import delete_database
-from tasks import Task
+from tasks.models import Task
 from tests.init_test_database import init_test_database
 from utils.constants import TEST_DATABASE
 from tasks.data import TaskDB
-
+from appDB import delete_database
+import unittest
 
 class TasksDatabaseTests(unittest.TestCase):
 

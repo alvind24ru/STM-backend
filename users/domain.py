@@ -1,5 +1,5 @@
-from users.data import UsersDB
-from users.models import User
+from stm_api.users.data import UsersDB
+from stm_api.users.models import User
 from utils.exceptions import DomainException
 
 

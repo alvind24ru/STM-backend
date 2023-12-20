@@ -1,7 +1,7 @@
-from tasks.models import Task
-from tasks.data import TaskDB
+from stm_api.tasks.models import Task
+from stm_api.tasks.data import TaskDB
 from utils.exceptions import *
-from users.di import domain as user_domain
+from stm_api.users.di import domain as user_domain
 
 
 class TaskDomain:

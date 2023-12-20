@@ -1,7 +1,7 @@
 #from users.di import *
 from flask import request
 
-from users.di import presentation
+from stm_api.users.di import presentation
 from utils.exceprion_mapper import handler_exception
 from utils.constants import VERSION, HEADERS
 from utils.flask import app
