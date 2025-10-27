@@ -13,3 +13,4 @@ def list_to_json(cur, data: list):
     r = json.dumps(result, ensure_ascii=False)
     r.replace()
     return r
+#sometest delete it
